@@ -20,16 +20,28 @@ contract AxiePresale is HasNoEther, Pausable {
   uint256 constant public INITIAL_PRICE = INITIAL_PRICE_INCREMENT;
   uint256 constant public REF_CREDITS_PER_AXIE = 5;
 
+  // {axie class: price}
   mapping (uint8 => uint256) public currentPrices;
+
+  // {axie class: price increment}
   mapping (uint8 => uint256) public priceIncrements;
 
+  // {axie class: total adopted number}
   mapping (uint8 => uint256) public totalAxiesAdopted;
+
+  // {adopter address: {class: adopted number}}
   mapping (address => mapping (uint8 => uint256)) public axiesAdopted;
 
+  // {referrer address: credits}
   mapping (address => uint256) public referralCredits;
+  
+  // {referrer address: total rewarded axies}
   mapping (address => uint256) public axiesRewarded;
+
+  // total number of rewarded axies globally
   uint256 public totalAxiesRewarded;
 
+  // fired when axies of a certain class are adopted
   event AxiesAdopted(
     address indexed adopter,
     uint8 indexed clazz,
@@ -37,9 +49,13 @@ contract AxiePresale is HasNoEther, Pausable {
     address indexed referrer
   );
 
+  // fired when axies are rewarded to an address
   event AxiesRewarded(address indexed receiver, uint256 quantity);
 
+  // fired when axies of a certain class are redeemed (removed from the system)
   event AdoptedAxiesRedeemed(address indexed receiver, uint8 indexed clazz, uint256 quantity);
+  
+  // fired when rewarded axies are redeemed
   event RewardedAxiesRedeemed(address indexed receiver, uint256 quantity);
 
   function AxiePresale() public {
@@ -50,6 +66,9 @@ contract AxiePresale is HasNoEther, Pausable {
       currentPrices[CLASS_PLANT] = INITIAL_PRICE;
   }
 
+  /** 
+  * @dev Return the total price of the requested amount of axies of each kind
+  */
   function axiesPrice(
     uint256 beastQuantity,
     uint256 aquaticQuantity,
@@ -71,6 +90,9 @@ contract AxiePresale is HasNoEther, Pausable {
     totalPrice = totalPrice.add(price);
   }
 
+  /** 
+  * @dev Try to adopt certain amount of axies of each kind, requires ether payment
+  */
   function adoptAxies(
     uint256 beastQuantity,
     uint256 aquaticQuantity,
@@ -134,6 +156,7 @@ contract AxiePresale is HasNoEther, Pausable {
       value -= price;
     }
 
+    // refund the adopter of the remaining funds
     msg.sender.transfer(value);
 
     // The current referral is ignored if the referrer's address is 0x0.
@@ -151,11 +174,16 @@ contract AxiePresale is HasNoEther, Pausable {
         totalAxiesRewarded = totalAxiesRewarded.add(numReward);
         AxiesRewarded(actualReferrer, numReward);
       } else {
+        // remember the credit if it's not enough to reward an axie
+        // this seems redundant though, see line 164
         referralCredits[actualReferrer] = numCredit;
       }
     }
   }
 
+  /** 
+  * @dev Redeem adopted axies, can only be called from the contract owner
+  */
   function redeemAdoptedAxies(
     address receiver,
     uint256 beastQuantity,
@@ -177,6 +205,9 @@ contract AxiePresale is HasNoEther, Pausable {
     );
   }
 
+  /** 
+  * @dev Redeem rewarded axies, can only be called from the contract owner
+  */
   function redeemRewardedAxies(
     address receiver,
     uint256 quantity
@@ -242,6 +273,7 @@ contract AxiePresale is HasNoEther, Pausable {
     private
     returns (uint256 totalPrice)
   {
+    // adoption changes the current price and price increment, so update them
     (totalPrice, priceIncrements[clazz], currentPrices[clazz]) = _axiesPrice(clazz, quantity);
 
     axiesAdopted[adopter][clazz] = axiesAdopted[adopter][clazz].add(quantity);
