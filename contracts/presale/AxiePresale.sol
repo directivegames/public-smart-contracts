@@ -206,7 +206,7 @@ contract AxiePresale is HasNoEther, Pausable {
   }
 
   /** 
-  * @dev Redeem rewarded axies, can only be called from the contract owner
+  * @dev Redeem some rewarded axies, can only be called from the contract owner
   */
   function redeemRewardedAxies(
     address receiver,

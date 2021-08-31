@@ -22,14 +22,20 @@ contract AxieRedemptionInternal is HasNoContracts, Pausable {
   struct Redemption {
     address receiver;
     uint256 clazz;
+    // when the redemption happens
     uint256 redeemedAt;
   }
 
   AxieCore public coreContract;
   AxiePresaleExtended public presaleContract;
 
+  // {query id: redemption}
   mapping (uint256 => Redemption) public redemptionByQueryId;
+
+  // {receiver address: {class: [list of query ids]}}
   mapping (address => mapping (uint256 => uint256[])) public ownedRedemptions;
+
+  // {query id: redemption index}
   mapping (uint256 => uint256) public ownedRedemptionIndex;
 
   event RedemptionStarted(uint256 indexed _queryId);
@@ -64,6 +70,9 @@ contract AxieRedemptionInternal is HasNoContracts, Pausable {
     presaleContract = AxiePresaleExtended(_presaleAddress);
   }
 
+  /** 
+  * @dev Return the number of axies being redeemed for a receiver and class
+  */
   function numBeingRedeemedAxies(address _receiver, uint256 _class) external view returns (uint256) {
     return ownedRedemptions[_receiver][_class].length;
   }
@@ -111,6 +120,9 @@ contract AxieRedemptionInternal is HasNoContracts, Pausable {
     _redeemRewardedAxies(_receiver);
   }
 
+  /** 
+  * @dev Retry an redemption indicated by the old query id
+  */
   function retryRedemption(
     uint256 _oldQueryId,
     uint256 _gasLimit
@@ -123,6 +135,7 @@ contract AxieRedemptionInternal is HasNoContracts, Pausable {
     Redemption memory _redemption = redemptionByQueryId[_oldQueryId];
     require(_redemption.receiver != address(0));
 
+    // issue a new query and replace the old query id with the new one
     uint256 _redemptionIndex = ownedRedemptionIndex[_oldQueryId];
     uint256 _queryId = _sendRandomQuery(_gasLimit);
 
@@ -167,6 +180,7 @@ contract AxieRedemptionInternal is HasNoContracts, Pausable {
     ownedRedemptions[_redemption.receiver][_redemption.clazz][_redemptionIndex] = _lastRedemptionQueryId;
     ownedRedemptionIndex[_lastRedemptionQueryId] = _redemptionIndex;
 
+    // delete records associated with the old query
     delete ownedRedemptions[_redemption.receiver][_redemption.clazz][_lastRedemptionIndex];
     ownedRedemptions[_redemption.receiver][_redemption.clazz].length--;
 

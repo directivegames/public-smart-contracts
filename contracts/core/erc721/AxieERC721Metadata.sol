@@ -26,6 +26,10 @@ contract AxieERC721Metadata is AxieERC721BaseEnumerable, IERC721Metadata {
     tokenURISuffix = _suffix;
   }
 
+  /**
+  * Return the uri of tokenURIPrefix{token id}tokenURISuffix
+  * Note that the prefix and suffix can be updated via 'setTokenURIAffixes'
+  */
   function tokenURI(
     uint256 _tokenId
   )
