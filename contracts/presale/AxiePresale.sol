@@ -41,7 +41,7 @@ contract AxiePresale is HasNoEther, Pausable {
   // total number of rewarded axies globally
   uint256 public totalAxiesRewarded;
 
-  // fired when axies of a certain class are adopted
+  // fired when some axies of a certain class are adopted
   event AxiesAdopted(
     address indexed adopter,
     uint8 indexed clazz,
@@ -49,13 +49,13 @@ contract AxiePresale is HasNoEther, Pausable {
     address indexed referrer
   );
 
-  // fired when axies are rewarded to an address
+  // fired when some axies are rewarded to an address
   event AxiesRewarded(address indexed receiver, uint256 quantity);
 
-  // fired when axies of a certain class are redeemed (removed from the system)
+  // fired when some axies of a certain class are redeemed (removed from the system)
   event AdoptedAxiesRedeemed(address indexed receiver, uint8 indexed clazz, uint256 quantity);
   
-  // fired when rewarded axies are redeemed
+  // fired when some rewarded axies are redeemed
   event RewardedAxiesRedeemed(address indexed receiver, uint256 quantity);
 
   function AxiePresale() public {
@@ -91,7 +91,7 @@ contract AxiePresale is HasNoEther, Pausable {
   }
 
   /** 
-  * @dev Try to adopt certain amount of axies of each kind, requires ether payment
+  * @dev Try to adopt some axies of each kind, requires ether payment
   */
   function adoptAxies(
     uint256 beastQuantity,
@@ -156,7 +156,7 @@ contract AxiePresale is HasNoEther, Pausable {
       value -= price;
     }
 
-    // refund the adopter of the remaining funds
+    // refund the remaining funds
     msg.sender.transfer(value);
 
     // The current referral is ignored if the referrer's address is 0x0.
@@ -182,7 +182,7 @@ contract AxiePresale is HasNoEther, Pausable {
   }
 
   /** 
-  * @dev Redeem adopted axies, can only be called from the contract owner
+  * @dev Redeem some adopted axies, can only be called from the contract owner
   */
   function redeemAdoptedAxies(
     address receiver,

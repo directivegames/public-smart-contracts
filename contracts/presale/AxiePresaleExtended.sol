@@ -31,23 +31,44 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
   AxiePresale public presaleContract;
   address public redemptionAddress;
 
+  // {axie class: price}
   mapping (uint8 => uint256) public currentPrice;
+  
+  // {axie class: price increment}
   mapping (uint8 => uint256) public priceIncrement;
 
+  // {axie class: total adopted}
   mapping (uint8 => uint256) private _totalAdoptedAxies;
+
+  // {axie class: total deducted adopted}
   mapping (uint8 => uint256) private _totalDeductedAdoptedAxies;
+
+  // {adopter address: {axie class: total adopted}}
   mapping (address => mapping (uint8 => uint256)) private _numAdoptedAxies;
+
+  // {adopter address: {axie class: total deducted adopted}}
   mapping (address => mapping (uint8 => uint256)) private _numDeductedAdoptedAxies;
 
+  // {referrer address: credits}
   mapping (address => uint256) private _numRefCredits;
+
+  // {referrer address: deducted credits}
   mapping (address => uint256) private _numDeductedRefCredits;
   uint256 public numBountyCredits;
 
+  // total rewarded axies globally
   uint256 private _totalRewardedAxies;
+  
+  // total deducted rewarded axies globally
   uint256 private _totalDeductedRewardedAxies;
+  
+  // {referrer address: total rewarded axies}
   mapping (address => uint256) private _numRewardedAxies;
+
+  // {referrer address: total deducted rewarded axies}
   mapping (address => uint256) private _numDeductedRewardedAxies;
 
+  // fired when some axies of a certain class are adopted
   event AxiesAdopted(
     address indexed _adopter,
     uint8 indexed _class,
@@ -55,19 +76,26 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     address indexed _referrer
   );
 
+  // fired when some axies are rewarded to an address
   event AxiesRewarded(address indexed _receiver, uint256 _quantity);
 
+  // fired when some axies of a certain class are redeemed (removed from the system)
   event AdoptedAxiesRedeemed(address indexed _receiver, uint8 indexed _class, uint256 _quantity);
+
+  // fired when some rewarded axies are redeemed
   event RewardedAxiesRedeemed(address indexed _receiver, uint256 _quantity);
 
+  // fired when some credits are minted
   event RefCreditsMinted(address indexed _receiver, uint256 _numMintedCredits);
 
+  // constructor!
   function AxiePresaleExtended() public payable {
     require(msg.value == 0);
     paused = true;
     numBountyCredits = 300;
   }
 
+  // fallback, requires the sender to be the original prescale contract
   function () external payable {
     require(msg.sender == address(presaleContract));
   }
@@ -87,6 +115,7 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     _;
   }
 
+  // withdraw ether from both the original and this contract
   function reclaimEther() external onlyOwner whenInitialized {
     presaleContract.reclaimEther();
     owner.transfer(this.balance);
@@ -119,6 +148,9 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     redemptionAddress = _redemptionAddress;
   }
 
+  /** 
+  * @dev Return the total number of adopted axies for a given class (including the ones from the original contract)
+  */
   function totalAdoptedAxies(
     uint8 _class,
     bool _deduction
@@ -136,6 +168,9 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     }
   }
 
+  /** 
+  * @dev Return the total number of adopted axies from a particualr owner, for a given class (including the ones from the original contract)
+  */
   function numAdoptedAxies(
     address _owner,
     uint8 _class,
@@ -154,6 +189,9 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     }
   }
 
+  /** 
+  * @dev Return the per owner credits
+  */
   function numRefCredits(
     address _owner,
     bool _deduction
@@ -171,6 +209,9 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     }
   }
 
+  /** 
+  * @dev Return the total number of adopted axies globally
+  */
   function totalRewardedAxies(
     bool _deduction
   )
@@ -187,6 +228,9 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     }
   }
 
+  /** 
+  * @dev Return the number of rewarded axies for an owner
+  */
   function numRewardedAxies(
     address _owner,
     bool _deduction
@@ -204,6 +248,9 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     }
   }
 
+  /** 
+  * @dev Return the total price for given number of axies per class
+  */
   function axiesPrice(
     uint256 _beastQuantity,
     uint256 _aquaticQuantity,
@@ -226,6 +273,9 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     _totalPrice = _totalPrice.add(price);
   }
 
+  /** 
+  * @dev Try to adopt some axies of each kind, requires ether payment
+  */
   function adoptAxies(
     uint256 _beastQuantity,
     uint256 _aquaticQuantity,
@@ -296,6 +346,7 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
       _value -= _price;
     }
 
+    // refund the remaining funds
     msg.sender.transfer(_value);
 
     // The current referral is ignored if the referrer's address is 0x0.
@@ -323,6 +374,9 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     return numBountyCredits;
   }
 
+  /** 
+  * @dev Redeem adopted axies, can only be called from the contract owner
+  */
   function redeemAdoptedAxies(
     address _receiver,
     uint256 _beastQuantity,
@@ -345,6 +399,9 @@ contract AxiePresaleExtended is HasNoContracts, Pausable {
     );
   }
 
+  /** 
+  * @dev Redeem some rewarded axies, can only be called from the contract owner
+  */
   function redeemRewardedAxies(
     address _receiver,
     uint256 _quantity
